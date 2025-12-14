@@ -22,8 +22,11 @@ public class CreateRoleUseCase {
             throw new IllegalArgumentException("Role name cannot be empty");
         }
         
-        log.info("Creating new role: {}", roleName);
-        Role role = new Role(UUID.randomUUID(), roleName.trim());
-        return roleRepository.save(role);
+        String trimmedRoleName = roleName.trim();
+        log.info("AUDIT: Creating new role - roleName: {}", trimmedRoleName);
+        Role role = new Role(UUID.randomUUID(), trimmedRoleName);
+        Role savedRole = roleRepository.save(role);
+        log.info("AUDIT: Role created successfully - roleName: {}, roleId: {}", trimmedRoleName, savedRole.id());
+        return savedRole;
     }
 }

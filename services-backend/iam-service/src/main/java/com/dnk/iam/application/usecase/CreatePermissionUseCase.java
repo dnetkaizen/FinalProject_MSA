@@ -22,8 +22,11 @@ public class CreatePermissionUseCase {
             throw new IllegalArgumentException("Permission name cannot be empty");
         }
         
-        log.info("Creating new permission: {}", permissionName);
-        Permission permission = new Permission(UUID.randomUUID(), permissionName.trim());
-        return permissionRepository.save(permission);
+        String trimmedPermissionName = permissionName.trim();
+        log.info("AUDIT: Creating new permission - permissionName: {}", trimmedPermissionName);
+        Permission permission = new Permission(UUID.randomUUID(), trimmedPermissionName);
+        Permission savedPermission = permissionRepository.save(permission);
+        log.info("AUDIT: Permission created successfully - permissionName: {}, permissionId: {}", trimmedPermissionName, savedPermission.id());
+        return savedPermission;
     }
 }

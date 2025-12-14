@@ -3,7 +3,6 @@ package com.dnk.iam.application.usecase;
 import com.dnk.iam.application.port.out.RoleRepositoryPort;
 import com.dnk.iam.application.port.out.UserRoleRepositoryPort;
 import com.dnk.iam.domain.model.Role;
-import com.dnk.iam.domain.model.UserRole;
 import com.dnk.iam.application.exception.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,10 +26,14 @@ public class AssignRoleToUserUseCase {
             throw new IllegalArgumentException("Role name cannot be empty");
         }
 
-        log.info("Assigning role '{}' to user '{}'", roleName, userId);
-        Role role = roleRepository.findByName(roleName.trim())
-                .orElseThrow(() -> new EntityNotFoundException("Role not found: " + roleName));
+        String trimmedUserId = userId.trim();
+        String trimmedRoleName = roleName.trim();
         
-        userRoleRepository.assignRole(userId.trim(), role.id());
+        log.info("AUDIT: Assigning role to user - userId: {}, roleName: {}", trimmedUserId, trimmedRoleName);
+        Role role = roleRepository.findByName(trimmedRoleName)
+                .orElseThrow(() -> new EntityNotFoundException("Role not found: " + trimmedRoleName));
+        
+        userRoleRepository.assignRole(trimmedUserId, role.id());
+        log.info("AUDIT: Role assigned to user successfully - userId: {}, roleName: {}", trimmedUserId, trimmedRoleName);
     }
 }

@@ -5,7 +5,6 @@ import com.dnk.iam.application.port.out.RolePermissionRepositoryPort;
 import com.dnk.iam.application.port.out.RoleRepositoryPort;
 import com.dnk.iam.domain.model.Permission;
 import com.dnk.iam.domain.model.Role;
-import com.dnk.iam.domain.model.RolePermission;
 import com.dnk.iam.application.exception.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,13 +29,17 @@ public class AssignPermissionToRoleUseCase {
             throw new IllegalArgumentException("Permission name cannot be empty");
         }
 
-        log.info("Assigning permission '{}' to role '{}'", permissionName, roleName);
-        Role role = roleRepository.findByName(roleName.trim())
-                .orElseThrow(() -> new EntityNotFoundException("Role not found: " + roleName));
+        String trimmedRoleName = roleName.trim();
+        String trimmedPermissionName = permissionName.trim();
+        
+        log.info("AUDIT: Assigning permission to role - roleName: {}, permissionName: {}", trimmedRoleName, trimmedPermissionName);
+        Role role = roleRepository.findByName(trimmedRoleName)
+                .orElseThrow(() -> new EntityNotFoundException("Role not found: " + trimmedRoleName));
                 
-        Permission permission = permissionRepository.findByName(permissionName.trim())
-                .orElseThrow(() -> new EntityNotFoundException("Permission not found: " + permissionName));
+        Permission permission = permissionRepository.findByName(trimmedPermissionName)
+                .orElseThrow(() -> new EntityNotFoundException("Permission not found: " + trimmedPermissionName));
         
         rolePermissionRepository.assignPermission(role.id(), permission.id());
+        log.info("AUDIT: Permission assigned to role successfully - roleName: {}, permissionName: {}", trimmedRoleName, trimmedPermissionName);
     }
 }

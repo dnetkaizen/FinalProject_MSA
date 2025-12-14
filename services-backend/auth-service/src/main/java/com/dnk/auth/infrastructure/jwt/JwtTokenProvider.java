@@ -6,49 +6,41 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.dnk.auth.application.port.out.TokenProviderPort;
+import com.dnk.auth.infrastructure.config.JwtProperties;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 
 @Component
+@RequiredArgsConstructor
 public class JwtTokenProvider implements TokenProviderPort {
 
     private static final Logger log = LoggerFactory.getLogger(JwtTokenProvider.class);
 
-    private static final String JWT_SECRET_ENV = "JWT_SECRET";
-    private static final String JWT_ISSUER_ENV = "JWT_ISSUER";
-
     private static final Duration ACCESS_TOKEN_VALIDITY = Duration.ofMinutes(15);
     private static final Duration REFRESH_TOKEN_VALIDITY = Duration.ofDays(7);
 
-    private final Key signingKey;
-    private final String issuer;
+    private final JwtProperties jwtProperties;
+    private Key signingKey;
 
-    public JwtTokenProvider() {
-        String secret = System.getenv(JWT_SECRET_ENV);
-        if (secret == null || secret.isBlank()) {
-            throw new IllegalStateException(JWT_SECRET_ENV + " environment variable is not set or is blank");
-        }
-
-        this.issuer = System.getenv(JWT_ISSUER_ENV);
-        if (this.issuer == null || this.issuer.isBlank()) {
-            throw new IllegalStateException(JWT_ISSUER_ENV + " environment variable is not set or is blank");
-        }
-
+    @PostConstruct
+    private void init() {
         try {
-            this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+            this.signingKey = Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8));
         } catch (IllegalArgumentException ex) {
             throw new IllegalStateException("Invalid JWT secret: " + ex.getMessage(), ex);
         }
 
         log.info("JwtTokenProvider initialized with issuer '{}' and accessTokenValidity={} minutes, refreshTokenValidity={} days",
-                this.issuer, ACCESS_TOKEN_VALIDITY.toMinutes(), REFRESH_TOKEN_VALIDITY.toDays());
+                jwtProperties.getIssuer(), ACCESS_TOKEN_VALIDITY.toMinutes(), REFRESH_TOKEN_VALIDITY.toDays());
     }
 
     @Override
@@ -67,7 +59,7 @@ public class JwtTokenProvider implements TokenProviderPort {
 
         return Jwts.builder()
                 .setSubject(userId)
-                .setIssuer(issuer)
+                .setIssuer(jwtProperties.getIssuer())
                 .setIssuedAt(Date.from(now))
                 .setExpiration(Date.from(expiresAt))
                 .claim("email", email)
