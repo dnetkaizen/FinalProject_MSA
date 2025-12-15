@@ -6,16 +6,12 @@ export interface LoginWithGoogleRequest {
 }
 
 export interface LoginWithGoogleResponse {
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
-  requiresMfa: boolean;
-  user: {
-    id: string;
-    email: string;
-    name?: string;
-    avatar?: string;
-  };
+  mfaRequired: boolean;
+  userId: string;
+  email: string;
+  // Optional tokens if backend were to support direct login without MFA in future
+  accessToken?: string;
+  refreshToken?: string;
 }
 
 export interface VerifyMfaOtpRequest {
@@ -26,13 +22,8 @@ export interface VerifyMfaOtpRequest {
 export interface VerifyMfaOtpResponse {
   accessToken: string;
   refreshToken: string;
-  expiresIn: number;
-  user: {
-    id: string;
-    email: string;
-    name?: string;
-    avatar?: string;
-  };
+  tokenType: string;
+  expiresInSeconds: number;
 }
 
 /**
@@ -79,9 +70,6 @@ export const authApi = {
   async logout(): Promise<void> {
     // Clear the auth token from the HTTP client
     http.setAuthToken(null);
-
-    // In a real app, you might want to make an API call to invalidate the token
-    // await http.auth.post('/auth/logout');
   },
 
   /**

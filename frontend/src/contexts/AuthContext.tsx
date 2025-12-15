@@ -124,29 +124,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await authApi.loginWithGoogle(idToken);
 
       // Step 3: Handle response
-      if (response.requiresMfa) {
+      // Backend returns mfaRequired, userId, email at root level
+      if (response.mfaRequired) {
         // MFA is required
         dispatch({
           type: 'MFA_REQUIRED',
           payload: {
-            userId: response.user.id,
-            email: response.user.email,
+            userId: response.userId,
+            email: response.email,
           },
         });
       } else {
         // Direct login success
-        // Set token in HTTP client
-        authApi.setAuthToken(response.accessToken);
+        // NOTE: Current backend DTO GoogleLoginResponse does NOT seem to return tokens.
+        // Assuming if mfaRequired is false, we might need tokens from somewhere.
+        // But referencing the response handling:
+        if (response.accessToken && response.refreshToken) {
+          authApi.setAuthToken(response.accessToken);
 
-        dispatch({
-          type: 'LOGIN_SUCCESS',
-          payload: {
-            userId: response.user.id,
-            email: response.user.email,
-            accessToken: response.accessToken,
-            refreshToken: response.refreshToken,
-          },
-        });
+          dispatch({
+            type: 'LOGIN_SUCCESS',
+            payload: {
+              userId: response.userId,
+              email: response.email,
+              accessToken: response.accessToken,
+              refreshToken: response.refreshToken,
+            },
+          });
+        } else {
+          // Fallback/Safety: If no tokens but success, maybe treat as MFA required or error?
+          // For now assume logic follows MFA path mostly.
+          console.warn("Direct login succeeded but no tokens returned. Check backend.");
+        }
+
       }
     } catch (error) {
       console.error('Google sign in error:', error);
