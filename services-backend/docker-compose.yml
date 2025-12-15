@@ -1,0 +1,26 @@
+services:
+  auth-service:
+    build: ./auth-service
+    ports:
+      - "8081:8081"
+    env_file:
+      - ./auth-service/.env
+    volumes:
+      - ./auth-service/secrets:/app/secrets:ro
+    environment:
+      # Override path to point to the mounted volume in the container
+      - FIREBASE_SERVICE_ACCOUNT_PATH=/app/secrets/firebase-service-account.json
+
+  iam-service:
+    build: ./iam-service
+    ports:
+      - "8082:8082"
+    env_file:
+      - ./iam-service/.env
+
+  enrollment-service:
+    build: ./enrollment-service
+    ports:
+      - "8083:8083"
+    env_file:
+      - ./enrollment-service/.env

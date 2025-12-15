@@ -1,0 +1,19 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_FIREBASE_API_KEY: ${VITE_FIREBASE_API_KEY}
+        VITE_FIREBASE_AUTH_DOMAIN: ${VITE_FIREBASE_AUTH_DOMAIN}
+        VITE_FIREBASE_PROJECT_ID: ${VITE_FIREBASE_PROJECT_ID}
+        VITE_FIREBASE_STORAGE_BUCKET: ${VITE_FIREBASE_STORAGE_BUCKET}
+        VITE_FIREBASE_MESSAGING_SENDER_ID: ${VITE_FIREBASE_MESSAGING_SENDER_ID}
+        VITE_FIREBASE_APP_ID: ${VITE_FIREBASE_APP_ID}
+        VITE_AUTH_API_URL: ${VITE_AUTH_API_URL:-http://localhost:8081}
+        VITE_IAM_API_URL: ${VITE_IAM_API_URL:-http://localhost:8082}
+        VITE_ENROLLMENT_API_URL: ${VITE_ENROLLMENT_API_URL:-http://localhost:8083}
+    ports:
+      - "3000:80"
+    env_file:
+      - .env

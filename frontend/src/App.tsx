@@ -1,35 +1,104 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import LoginPage from './pages/LoginPage';
+import MfaPage from './pages/MfaPage';
+import CoursesPage from './pages/CoursesPage';
 
-function App() {
-  const [count, setCount] = useState(0)
+/**
+ * Protected Route Component
+ * Requires user to be authenticated (have accessToken)
+ */
+function PrivateRoute({ children }: { children: React.ReactNode }) {
+  const { state } = useAuth();
+  const location = useLocation();
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+  if (state.isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    );
+  }
+
+  // Redirect to login if not authenticated
+  return state.isAuthenticated ? (
+    <>{children}</>
+  ) : (
+    <Navigate to="/login" state={{ from: location }} replace />
+  );
 }
 
-export default App
+/**
+ * MFA Route Component
+ * Requires mfaRequired === true
+ */
+function MfaRoute({ children }: { children: React.ReactNode }) {
+  const { state } = useAuth();
+
+  // If already authenticated, redirect to courses
+  if (state.isAuthenticated) {
+    return <Navigate to="/courses" replace />;
+  }
+
+  // If MFA not required, redirect to login
+  if (!state.mfaRequired) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+}
+
+/**
+ * App Routes
+ */
+function AppRoutes() {
+  return (
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/login" element={<LoginPage />} />
+
+      {/* MFA Route - Protected by mfaRequired */}
+      <Route
+        path="/mfa"
+        element={
+          <MfaRoute>
+            <MfaPage />
+          </MfaRoute>
+        }
+      />
+
+      {/* Protected Routes - Require accessToken */}
+      <Route
+        path="/courses"
+        element={
+          <PrivateRoute>
+            <CoursesPage />
+          </PrivateRoute>
+        }
+      />
+
+      {/* Default Route */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
+
+      {/* Catch All - Redirect to login */}
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
+  );
+}
+
+/**
+ * Main App Component
+ * Wraps everything with Router and AuthProvider
+ */
+export default function App() {
+  return (
+    <Router>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </Router>
+  );
+}
