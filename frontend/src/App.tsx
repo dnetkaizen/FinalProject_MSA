@@ -93,11 +93,17 @@ function AppRoutes() {
  * Main App Component
  * Wraps everything with Router and AuthProvider
  */
+// ... imports
+import { Toaster } from 'react-hot-toast';
+
+// ... (Rest of the file)
+
 export default function App() {
   return (
     <Router>
       <AuthProvider>
         <AppRoutes />
+        <Toaster position="top-right" />
       </AuthProvider>
     </Router>
   );

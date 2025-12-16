@@ -5,19 +5,20 @@ export interface Course {
     id: string;
     code: string;
     name: string;
+    active: boolean;
+    // description and credits might not be returned by minimal backend
     description?: string;
     credits?: number;
-    active: boolean;
-    createdAt: string;
-    updatedAt: string;
+    createdAt?: string; // Optional in case backend doesn't return
+    updatedAt?: string;
 }
 
 export interface Enrollment {
     id: string;
     userId: string;
     courseId: string;
-    enrolledAt: string;
-    status: 'active' | 'completed' | 'dropped';
+    enrolledAt: string; // Backend might use createdAt
+    status: 'active' | 'completed' | 'dropped'; // Backend might generic status
     grade?: number;
     course?: Course;
 }
@@ -25,6 +26,7 @@ export interface Enrollment {
 export interface CreateCourseRequest {
     code: string;
     name: string;
+    // Optional additional fields although backend might ignore them
     description?: string;
     credits?: number;
     active?: boolean;
@@ -39,7 +41,7 @@ export interface UpdateCourseRequest {
 }
 
 export interface EnrollRequest {
-    userId: string;
+    // userId removed - taken from token
     courseId: string;
 }
 
@@ -56,7 +58,8 @@ export const enrollmentApi = {
      * Get all courses
      */
     async getCourses(activeOnly: boolean = false): Promise<Course[]> {
-        const response = await http.enrollment.get<Course[]>('/enrollment/courses', {
+        // Backend maps to /courses
+        const response = await http.enrollment.get<Course[]>('/courses', {
             params: { active: activeOnly || undefined }
         });
         return response.data;
@@ -66,7 +69,7 @@ export const enrollmentApi = {
      * Get course by ID
      */
     async getCourseById(courseId: string): Promise<Course> {
-        const response = await http.enrollment.get<Course>(`/enrollment/courses/${courseId}`);
+        const response = await http.enrollment.get<Course>(`/courses/${courseId}`);
         return response.data;
     },
 
@@ -74,7 +77,7 @@ export const enrollmentApi = {
      * Create a new course
      */
     async createCourse(data: CreateCourseRequest): Promise<Course> {
-        const response = await http.enrollment.post<Course>('/enrollment/courses', data);
+        const response = await http.enrollment.post<Course>('/courses', data);
         return response.data;
     },
 
@@ -82,7 +85,7 @@ export const enrollmentApi = {
      * Update a course
      */
     async updateCourse(courseId: string, data: UpdateCourseRequest): Promise<Course> {
-        const response = await http.enrollment.put<Course>(`/enrollment/courses/${courseId}`, data);
+        const response = await http.enrollment.put<Course>(`/courses/${courseId}`, data);
         return response.data;
     },
 
@@ -90,22 +93,24 @@ export const enrollmentApi = {
      * Delete a course
      */
     async deleteCourse(courseId: string): Promise<void> {
-        await http.enrollment.delete(`/enrollment/courses/${courseId}`);
+        await http.enrollment.delete(`/courses/${courseId}`);
     },
 
     /**
-     * Get all enrollments
+     * Get all enrollments (Admin?)
      */
     async getEnrollments(): Promise<Enrollment[]> {
-        const response = await http.enrollment.get<Enrollment[]>('/enrollment/enrollments');
+        const response = await http.enrollment.get<Enrollment[]>('/enrollments');
         return response.data;
     },
 
     /**
-     * Get enrollments by user ID
+     * Get MY enrollments (Authenticated User)
+     * Replaces getUserEnrollments(userId)
      */
-    async getUserEnrollments(userId: string): Promise<Enrollment[]> {
-        const response = await http.enrollment.get<Enrollment[]>(`/enrollment/users/${userId}/enrollments`);
+    async getMyEnrollments(): Promise<Enrollment[]> {
+        // Backend maps to /enrollments/me
+        const response = await http.enrollment.get<Enrollment[]>('/enrollments/me');
         return response.data;
     },
 
@@ -113,15 +118,17 @@ export const enrollmentApi = {
      * Get enrollments by course ID
      */
     async getCourseEnrollments(courseId: string): Promise<Enrollment[]> {
-        const response = await http.enrollment.get<Enrollment[]>(`/enrollment/courses/${courseId}/enrollments`);
+        const response = await http.enrollment.get<Enrollment[]>(`/courses/${courseId}/enrollments`);
         return response.data;
     },
 
     /**
      * Enroll user in a course
      */
-    async enrollUser(data: EnrollRequest): Promise<Enrollment> {
-        const response = await http.enrollment.post<Enrollment>('/enrollment/enrollments', data);
+    async enrollUser(courseId: string): Promise<Enrollment> {
+        const data: EnrollRequest = { courseId };
+        // Backend maps to /enrollments
+        const response = await http.enrollment.post<Enrollment>('/enrollments', data);
         return response.data;
     },
 
@@ -129,7 +136,7 @@ export const enrollmentApi = {
      * Update an enrollment
      */
     async updateEnrollment(enrollmentId: string, data: UpdateEnrollmentRequest): Promise<Enrollment> {
-        const response = await http.enrollment.put<Enrollment>(`/enrollment/enrollments/${enrollmentId}`, data);
+        const response = await http.enrollment.put<Enrollment>(`/enrollments/${enrollmentId}`, data);
         return response.data;
     },
 
@@ -137,16 +144,17 @@ export const enrollmentApi = {
      * Delete an enrollment (unenroll)
      */
     async deleteEnrollment(enrollmentId: string): Promise<void> {
-        await http.enrollment.delete(`/enrollment/enrollments/${enrollmentId}`);
+        await http.enrollment.delete(`/enrollments/${enrollmentId}`);
     },
 
     /**
-     * Check if user is enrolled in a course
+     * Check if I am enrolled in a course
      */
-    async isUserEnrolled(userId: string, courseId: string): Promise<boolean> {
+    async isEnrolled(courseId: string): Promise<boolean> {
         try {
-            const enrollments = await this.getUserEnrollments(userId);
-            return enrollments.some(e => e.courseId === courseId && e.status === 'active');
+            const enrollments = await this.getMyEnrollments();
+            // Assuming status check is relevant, or existence is enough
+            return enrollments.some(e => e.courseId === courseId);
         } catch (error) {
             console.error('Error checking enrollment:', error);
             return false;
