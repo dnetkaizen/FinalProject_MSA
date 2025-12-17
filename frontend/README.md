@@ -45,7 +45,7 @@ Para levantar el frontend de manera aislada u orquestada:
    ```bash
    docker compose up --build -d
    ```
-3. Accede a `http://localhost:5173`.
+3. Accede a `http://localhost:3000`.
 
 ## 🏃‍♂️ Desarrollo Local (Sin Docker)
 

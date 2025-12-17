@@ -1,5 +1,15 @@
 # Backend Microservices Orchestration
 
+## 🚀 Despliegue en Render (Health Checks)
+
+Si estás desplegando los microservicios en **Render**, asegúrate de configurar el **Health Check Path** para que Render pueda verificar la salud de los servicios automáticamente:
+
+- **Path**: `/actuator/health`
+- **Puerto**: El puerto correspondiente a cada servicio (`8081`, `8082`, `8083`).
+
+Todos los microservicios ya incluyen la dependencia de `Spring Boot Actuator` y tienen expuesto el endpoint de salud de forma pública en la configuración de seguridad.
+
+
 Este directorio contiene los microservicios core de la plataforma Kaizen. Todos están desarrollados con **Java 17** y **Spring Boot 3.x**.
 
 ## 🏗 Servicios Incluidos
