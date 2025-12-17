@@ -1,4 +1,4 @@
-# Kaizen System - Microservices Architecture
+# UniPortal - Microservices Architecture
 
 Sistema de gestión universitaria basado en Microservicios, Clean Architecture y prácticas modernas de seguridad (JWT, MFA, RBAC).
 

@@ -55,6 +55,12 @@ Para levantar todos los microservicios backend al mismo tiempo:
    docker compose up --build -d
    ```
 
+### 🔑 Nota Importante: Crear el primer Administrador
+Por defecto, todos los usuarios se registran con el rol `student`. Para obtener acceso total:
+1. Regístrate normalmente en la aplicación.
+2. Copia tu **UID de Firebase**.
+3. Sigue las instrucciones en el [README de IAM Service](./iam-service/README.md#🔑-otorgar-rol-de-administrador-primer-usuario) para promover tu cuenta a `admin` vía SQL.
+
 ## 🛠 Script de Base de Datos
 El script para inicializar toda la base de datos (esquemas, tablas y datos semilla) se encuentra de forma accesible en:
 `database/init-db.sql`
