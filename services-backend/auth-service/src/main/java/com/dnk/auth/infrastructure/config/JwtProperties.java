@@ -9,6 +9,7 @@ public class JwtProperties {
     
     private String secret;
     private String issuer;
+    private long expiration;
 
     public String getSecret() {
         return secret;
@@ -30,5 +31,16 @@ public class JwtProperties {
             throw new IllegalArgumentException("JWT issuer cannot be null or empty");
         }
         this.issuer = issuer;
+    }
+
+    public long getExpiration() {
+        return expiration;
+    }
+
+    public void setExpiration(long expiration) {
+        if (expiration <= 0) {
+            throw new IllegalArgumentException("JWT expiration must be positive");
+        }
+        this.expiration = expiration;
     }
 }

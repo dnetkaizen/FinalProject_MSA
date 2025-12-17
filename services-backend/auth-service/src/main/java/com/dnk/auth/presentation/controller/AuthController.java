@@ -16,6 +16,10 @@ import com.dnk.auth.presentation.auth.GoogleLoginResponse;
 import com.dnk.auth.presentation.auth.VerifyMfaOtpRequest;
 import com.dnk.auth.presentation.auth.VerifyMfaOtpResponse;
 
+import com.dnk.auth.application.usecase.RefreshSessionUseCase;
+import com.dnk.auth.infrastructure.config.JwtProperties;
+import com.dnk.auth.presentation.auth.RefreshSessionRequest;
+
 import jakarta.validation.Valid;
 
 @RestController
@@ -25,11 +29,17 @@ public class AuthController {
 
     private final GoogleLoginUseCase googleLoginUseCase;
     private final VerifyMfaOtpUseCase verifyMfaOtpUseCase;
+    private final RefreshSessionUseCase refreshSessionUseCase;
+    private final JwtProperties jwtProperties;
 
     public AuthController(GoogleLoginUseCase googleLoginUseCase,
-                          VerifyMfaOtpUseCase verifyMfaOtpUseCase) {
+                          VerifyMfaOtpUseCase verifyMfaOtpUseCase,
+                          RefreshSessionUseCase refreshSessionUseCase,
+                          JwtProperties jwtProperties) {
         this.googleLoginUseCase = googleLoginUseCase;
         this.verifyMfaOtpUseCase = verifyMfaOtpUseCase;
+        this.refreshSessionUseCase = refreshSessionUseCase;
+        this.jwtProperties = jwtProperties;
     }
 
     @PostMapping("/login/google")
@@ -52,7 +62,20 @@ public class AuthController {
                 tokens.accessToken(),
                 tokens.refreshToken(),
                 "Bearer",
-                900L);
+                jwtProperties.getExpiration());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<VerifyMfaOtpResponse> refreshSession(@Valid @RequestBody RefreshSessionRequest request) {
+        AuthTokens tokens = refreshSessionUseCase.execute(request.refreshToken());
+
+        VerifyMfaOtpResponse response = new VerifyMfaOtpResponse(
+                tokens.accessToken(),
+                tokens.refreshToken(),
+                "Bearer",
+                jwtProperties.getExpiration());
 
         return ResponseEntity.ok(response);
     }

@@ -165,8 +165,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         if (decoded.exp < currentTime) {
           console.warn('Token expired during bootstrap');
-          await logout();
-          return;
+          // Try to refresh if we have a refresh token
+          if (refreshToken) {
+             try {
+               const newTokens = await authApi.refreshToken(refreshToken);
+               // If successful, proceed with new token
+               await handleSuccess(decoded.sub, decoded.email, newTokens.accessToken, newTokens.refreshToken);
+               return;
+             } catch (refreshErr) {
+               console.warn('Bootstrap refresh failed:', refreshErr);
+               await logout();
+               return;
+             }
+          } else {
+             await logout();
+             return;
+          }
         }
 
         const userId = decoded.sub;
@@ -230,6 +244,69 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     bootstrapSession();
   }, []);
+
+  // --- INACTIVITY & SESSION RENEWAL ---
+  const lastActivityRef = React.useRef<number>(Date.now());
+  const checkIntervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    // 1. Setup Activity Listeners
+    const events = ['mousedown', 'keydown', 'touchstart', 'scroll'];
+    const handleActivity = () => {
+      lastActivityRef.current = Date.now();
+    };
+
+    events.forEach(event => window.addEventListener(event, handleActivity));
+
+    // 2. Setup Interval Check (every 1 min)
+    checkIntervalRef.current = setInterval(async () => {
+      const now = Date.now();
+      const timeSinceLastActivity = now - lastActivityRef.current;
+      const INACTIVITY_LIMIT = 30 * 60 * 1000; // 30 mins
+
+      // A. Check Inactivity
+      if (state.isAuthenticated && timeSinceLastActivity > INACTIVITY_LIMIT) {
+        console.warn('User inactive for > 30 mins. Logging out.');
+        await logout();
+        return;
+      }
+
+      // B. Check Token Expiration & Refresh
+      if (state.isAuthenticated && state.accessToken) {
+        try {
+          const decoded = jwtDecode<JwtPayload>(state.accessToken);
+          const expTime = decoded.exp * 1000;
+          const timeLeft = expTime - now;
+
+          // If < 5 mins left, and user is active (implied by not hitting A), Refresh
+          if (timeLeft < 5 * 60 * 1000) {
+             console.log('Token expiring soon. Refreshing...');
+             if (state.refreshToken) {
+                try {
+                  const newTokens = await authApi.refreshToken(state.refreshToken);
+                  // We reuse handleSuccess to update state/storage
+                  // But handleSuccess fetches roles again, which is fine but maybe redundant. 
+                  // Let's just update tokens directly here or call a lighter version?
+                  // handleSuccess is fine.
+                  await handleSuccess(state.userId!, state.email!, newTokens.accessToken, newTokens.refreshToken);
+                  console.log('Session refreshed.');
+                } catch (err) {
+                  console.error('Failed to refresh session:', err);
+                }
+             }
+          }
+        } catch (e) {
+           console.error('Token check failed:', e);
+        }
+      }
+
+    }, 60 * 1000); // Check every minute
+
+    return () => {
+      events.forEach(event => window.removeEventListener(event, handleActivity));
+      if (checkIntervalRef.current) clearInterval(checkIntervalRef.current);
+    };
+  }, [state.isAuthenticated, state.accessToken, state.refreshToken]);
 
   // Helper to fetch roles post-login (called manually)
   const fetchRolesAndPermissions = async (userId: string) => {

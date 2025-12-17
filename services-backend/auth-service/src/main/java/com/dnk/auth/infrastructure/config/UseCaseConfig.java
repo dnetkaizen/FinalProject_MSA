@@ -15,6 +15,8 @@ import com.dnk.auth.application.usecase.VerifyMfaOtpUseCase;
 
 import com.dnk.auth.infrastructure.persistence.UserRightsFetcher;
 
+import com.dnk.auth.application.usecase.RefreshSessionUseCase;
+
 @Configuration
 public class UseCaseConfig {
 
@@ -42,5 +44,11 @@ public class UseCaseConfig {
     @Bean
     public JwtService jwtService(TokenProviderPort tokenProviderPort) {
         return new JwtService(tokenProviderPort);
+    }
+
+    @Bean
+    public RefreshSessionUseCase refreshSessionUseCase(TokenProviderPort tokenProviderPort,
+                                                       UserRightsFetcher userRightsFetcher) {
+        return new RefreshSessionUseCase(tokenProviderPort, userRightsFetcher);
     }
 }

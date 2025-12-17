@@ -25,7 +25,6 @@ public class JwtTokenProvider implements TokenProviderPort {
 
     private static final Logger log = LoggerFactory.getLogger(JwtTokenProvider.class);
 
-    private static final Duration ACCESS_TOKEN_VALIDITY = Duration.ofMinutes(15);
     private static final Duration REFRESH_TOKEN_VALIDITY = Duration.ofDays(7);
 
     private final JwtProperties jwtProperties;
@@ -39,18 +38,41 @@ public class JwtTokenProvider implements TokenProviderPort {
             throw new IllegalStateException("Invalid JWT secret: " + ex.getMessage(), ex);
         }
 
-        log.info("JwtTokenProvider initialized with issuer '{}' and accessTokenValidity={} minutes, refreshTokenValidity={} days",
-                jwtProperties.getIssuer(), ACCESS_TOKEN_VALIDITY.toMinutes(), REFRESH_TOKEN_VALIDITY.toDays());
+        log.info("JwtTokenProvider initialized with issuer '{}' and accessTokenValidity={} seconds, refreshTokenValidity={} days",
+                jwtProperties.getIssuer(), jwtProperties.getExpiration(), REFRESH_TOKEN_VALIDITY.toDays());
     }
 
     @Override
     public String generateAccessToken(String userId, String email, java.util.List<String> roles, java.util.List<String> permissions) {
-        return generateToken(userId, email, roles, permissions, ACCESS_TOKEN_VALIDITY);
+        return generateToken(userId, email, roles, permissions, Duration.ofSeconds(jwtProperties.getExpiration()));
     }
 
     @Override
     public String generateRefreshToken(String userId, String email) {
         return generateToken(userId, email, null, null, REFRESH_TOKEN_VALIDITY);
+    }
+
+    @Override
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parserBuilder().setSigningKey(signingKey).build().parseClaimsJws(token);
+            return true;
+        } catch (Exception e) {
+            log.error("Invalid JWT token: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public String getUserIdFromToken(String token) {
+        return Jwts.parserBuilder().setSigningKey(signingKey).build()
+                .parseClaimsJws(token).getBody().getSubject();
+    }
+
+    @Override
+    public String getEmailFromToken(String token) {
+        return Jwts.parserBuilder().setSigningKey(signingKey).build()
+                .parseClaimsJws(token).getBody().get("email", String.class);
     }
 
     private String generateToken(String userId, String email, java.util.List<String> roles, java.util.List<String> permissions, Duration validity) {

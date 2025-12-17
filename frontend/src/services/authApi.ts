@@ -57,8 +57,8 @@ export const authApi = {
   /**
    * Refresh access token
    */
-  async refreshToken(refreshToken: string): Promise<{ accessToken: string }> {
-    const response = await http.auth.post<{ accessToken: string }>('/auth/refresh-token', {
+  async refreshToken(refreshToken: string): Promise<VerifyMfaOtpResponse> {
+    const response = await http.auth.post<VerifyMfaOtpResponse>('/auth/refresh', {
       refreshToken,
     });
     return response.data;
