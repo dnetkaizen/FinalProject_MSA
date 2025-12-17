@@ -40,6 +40,16 @@ public class GlobalExceptionHandler {
         return response;
     }
 
+    @ExceptionHandler(com.dnk.enrollment.application.exception.ConflictException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public Map<String, Object> handleConflictException(com.dnk.enrollment.application.exception.ConflictException ex) {
+        log.warn("Conflict: {}", ex.getMessage());
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", ex.getMessage());
+        response.put("timestamp", Instant.now());
+        return response;
+    }
+
     @ExceptionHandler(EntityNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public Map<String, Object> handleEntityNotFoundException(EntityNotFoundException ex) {
@@ -98,4 +108,3 @@ public class GlobalExceptionHandler {
                 .body(response);
     }
 }
-

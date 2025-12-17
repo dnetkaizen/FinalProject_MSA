@@ -44,26 +44,34 @@ public class JwtTokenProvider implements TokenProviderPort {
     }
 
     @Override
-    public String generateAccessToken(String userId, String email) {
-        return generateToken(userId, email, ACCESS_TOKEN_VALIDITY);
+    public String generateAccessToken(String userId, String email, java.util.List<String> roles, java.util.List<String> permissions) {
+        return generateToken(userId, email, roles, permissions, ACCESS_TOKEN_VALIDITY);
     }
 
     @Override
     public String generateRefreshToken(String userId, String email) {
-        return generateToken(userId, email, REFRESH_TOKEN_VALIDITY);
+        return generateToken(userId, email, null, null, REFRESH_TOKEN_VALIDITY);
     }
 
-    private String generateToken(String userId, String email, Duration validity) {
+    private String generateToken(String userId, String email, java.util.List<String> roles, java.util.List<String> permissions, Duration validity) {
         Instant now = Instant.now();
         Instant expiresAt = now.plus(validity);
 
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .setSubject(userId)
                 .setIssuer(jwtProperties.getIssuer())
                 .setIssuedAt(Date.from(now))
                 .setExpiration(Date.from(expiresAt))
-                .claim("email", email)
-                .signWith(signingKey, SignatureAlgorithm.HS256)
+                .claim("email", email);
+
+        if (roles != null && !roles.isEmpty()) {
+            builder.claim("roles", roles);
+        }
+        if (permissions != null && !permissions.isEmpty()) {
+            builder.claim("permissions", permissions);
+        }
+
+        return builder.signWith(signingKey, SignatureAlgorithm.HS256)
                 .compact();
     }
 }

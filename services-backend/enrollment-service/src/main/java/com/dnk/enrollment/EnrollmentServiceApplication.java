@@ -15,11 +15,11 @@ import com.dnk.enrollment.infrastructure.config.JwtProperties;
 @EnableConfigurationProperties(JwtProperties.class)
 public class EnrollmentServiceApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(EnrollmentServiceApplication.class, args);
-	}
-	
-	// ---- DIAGNOSTIC DB CONNECTION (TEMPORAL) ----
+    public static void main(String[] args) {
+        SpringApplication.run(EnrollmentServiceApplication.class, args);
+    }
+
+    // ---- DIAGNOSTIC DB CONNECTION (TEMPORAL) ----
     @org.springframework.context.annotation.Bean
     CommandLineRunner checkDatabaseConnection(DataSource dataSource) {
         return args -> {
@@ -32,4 +32,8 @@ public class EnrollmentServiceApplication {
         };
     }
 
+    @org.springframework.context.annotation.Bean
+    public org.springframework.web.client.RestTemplate restTemplate() {
+        return new org.springframework.web.client.RestTemplate();
+    }
 }

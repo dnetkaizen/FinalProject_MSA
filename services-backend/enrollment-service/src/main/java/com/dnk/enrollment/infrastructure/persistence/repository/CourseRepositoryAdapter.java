@@ -32,14 +32,34 @@ public class CourseRepositoryAdapter implements CourseRepositoryPort {
     @Override
     public List<Course> findAll() {
         return courseJpaRepository.findAll().stream()
-                .map(entity -> new Course(entity.getId(), entity.getCode(), entity.getName(), entity.isActive()))
+                .map(this::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Course> findByActive(boolean active) {
+        return courseJpaRepository.findByActive(active).stream()
+                .map(this::toDomain)
                 .collect(Collectors.toList());
     }
 
     @Override
     public Optional<Course> findById(UUID id) {
         return courseJpaRepository.findById(id)
-                .map(entity -> new Course(entity.getId(), entity.getCode(), entity.getName(), entity.isActive()));
+                .map(this::toDomain);
+    }
+
+    @Override
+    public boolean existsByCode(String code) {
+        return courseJpaRepository.existsByCode(code);
+    }
+
+    @Override
+    public boolean existsByCodeAndIdNot(String code, UUID id) {
+        return courseJpaRepository.existsByCodeAndIdNot(code, id);
+    }
+
+    private Course toDomain(CourseEntity entity) {
+        return new Course(entity.getId(), entity.getCode(), entity.getName(), entity.isActive());
     }
 }
-

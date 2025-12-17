@@ -1,8 +1,9 @@
 package com.dnk.auth.application.port.out;
 
-public interface TokenProviderPort {
+import java.util.List;
 
-    String generateAccessToken(String userId, String email);
+public interface TokenProviderPort {
+    String generateAccessToken(String userId, String email, List<String> roles, List<String> permissions);
 
     String generateRefreshToken(String userId, String email);
 }

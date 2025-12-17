@@ -6,11 +6,12 @@ import java.util.List;
 import java.util.UUID;
 
 public interface EnrollmentRepositoryPort {
-    
-    Enrollment save(Enrollment enrollment);
-    
-    List<Enrollment> findByUserId(String userId);
-    
-    boolean existsByUserAndCourse(String userId, UUID courseId);
-}
 
+    Enrollment save(Enrollment enrollment);
+
+    List<Enrollment> findByUserId(String userId);
+
+    boolean existsByUserAndCourse(String userId, UUID courseId);
+
+    List<Enrollment> findAll();
+}

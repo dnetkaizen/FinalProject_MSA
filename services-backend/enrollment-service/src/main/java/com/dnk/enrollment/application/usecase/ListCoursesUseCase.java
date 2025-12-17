@@ -17,9 +17,12 @@ public class ListCoursesUseCase {
 
     private final CourseRepositoryPort courseRepository;
 
-    public List<Course> execute() {
+    public List<Course> execute(Boolean active) {
+        if (active != null) {
+            log.debug("Fetching courses with active={}", active);
+            return courseRepository.findByActive(active);
+        }
         log.debug("Fetching all courses");
         return courseRepository.findAll();
     }
 }
-

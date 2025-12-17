@@ -13,6 +13,8 @@ import com.dnk.auth.application.usecase.EmailOtpService;
 import com.dnk.auth.application.usecase.GoogleLoginUseCase;
 import com.dnk.auth.application.usecase.VerifyMfaOtpUseCase;
 
+import com.dnk.auth.infrastructure.persistence.UserRightsFetcher;
+
 @Configuration
 public class UseCaseConfig {
 
@@ -24,15 +26,17 @@ public class UseCaseConfig {
     @Bean
     public GoogleLoginUseCase googleLoginUseCase(IdentityProviderPort identityProviderPort,
                                                  MfaOtpRepositoryPort mfaOtpRepositoryPort,
-                                                 EmailOtpService emailOtpService) {
-        return new GoogleLoginUseCase(identityProviderPort, mfaOtpRepositoryPort, emailOtpService);
+                                                 EmailOtpService emailOtpService,
+                                                 UserRightsFetcher userRightsFetcher) {
+        return new GoogleLoginUseCase(identityProviderPort, mfaOtpRepositoryPort, emailOtpService, userRightsFetcher);
     }
 
     @Bean
     public VerifyMfaOtpUseCase verifyMfaOtpUseCase(MfaOtpRepositoryPort mfaOtpRepositoryPort,
                                                    TokenProviderPort tokenProviderPort,
-                                                   PasswordHashingPort passwordHashingPort) {
-        return new VerifyMfaOtpUseCase(mfaOtpRepositoryPort, tokenProviderPort, passwordHashingPort);
+                                                   PasswordHashingPort passwordHashingPort,
+                                                   UserRightsFetcher userRightsFetcher) {
+        return new VerifyMfaOtpUseCase(mfaOtpRepositoryPort, tokenProviderPort, passwordHashingPort, userRightsFetcher);
     }
 
     @Bean

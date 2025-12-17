@@ -89,11 +89,11 @@ const createHttpClient = (baseURL: string): AxiosInstance => {
     (error: AxiosError) => {
       const errorResponse = error.response || {} as any;
       const responseData = errorResponse.data || {};
-      const errorMessage = 
+      const errorMessage =
         responseData.message ||
         error.message ||
         'An unexpected error occurred';
-      
+
       const normalizedError: ApiError = {
         name: 'ApiError',
         message: errorMessage,
@@ -112,6 +112,11 @@ const createHttpClient = (baseURL: string): AxiosInstance => {
       // Handle specific status codes
       if (errorResponse.status === 401) {
         console.warn('Authentication required');
+        // Clear session and redirect to login
+        localStorage.clear();
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
       } else if (errorResponse.status === 403) {
         console.warn('Forbidden: You do not have permission to access this resource');
       } else if (errorResponse.status === 404) {
@@ -133,19 +138,19 @@ const createHttpClient = (baseURL: string): AxiosInstance => {
 const http = {
   // Auth API client
   auth: createHttpClient(AUTH_API_URL),
-  
+
   // IAM API client
   iam: createHttpClient(IAM_API_URL),
-  
+
   // Enrollment API client
   enrollment: createHttpClient(ENROLLMENT_API_URL),
-  
+
   // Set authentication token
   setAuthToken,
-  
+
   // Get authentication token
   getAuthToken,
-  
+
   // Create a custom client
   create: createHttpClient,
 };

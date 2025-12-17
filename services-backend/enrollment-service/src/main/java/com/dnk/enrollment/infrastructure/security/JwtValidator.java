@@ -58,12 +58,17 @@ public class JwtValidator {
             // Extract user information
             String userId = claims.getSubject();
             String email = claims.get("email", String.class);
+            
+            @SuppressWarnings("unchecked")
+            java.util.List<String> roles = claims.get("roles", java.util.List.class);
+            @SuppressWarnings("unchecked")
+            java.util.List<String> permissions = claims.get("permissions", java.util.List.class);
 
             if (userId == null || email == null) {
                 throw new SecurityException("Invalid token: Missing required claims");
             }
 
-            return new AuthenticatedUser(userId, email);
+            return new AuthenticatedUser(userId, email, roles, permissions);
 
         } catch (ExpiredJwtException ex) {
             throw new SecurityException("Token has expired: " + ex.getMessage(), ex);

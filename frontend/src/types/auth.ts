@@ -13,6 +13,8 @@ export interface AuthState {
   mfaRequired: boolean;
   isLoading: boolean;
   isAuthenticated: boolean;
+  roles: string[];
+  permissions: string[];
 }
 
 export interface GoogleSignInResult {

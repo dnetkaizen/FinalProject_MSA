@@ -1,6 +1,7 @@
 package com.dnk.auth.application.usecase;
 
 import java.security.SecureRandom;
+import java.util.List;
 
 import com.dnk.auth.application.exception.AuthException;
 import com.dnk.auth.application.model.GoogleLoginResult;
@@ -8,20 +9,24 @@ import com.dnk.auth.application.model.VerifiedIdentity;
 import com.dnk.auth.application.port.out.IdentityProviderPort;
 import com.dnk.auth.application.port.out.MfaOtpRepositoryPort;
 import com.dnk.auth.domain.model.MfaOtp;
+import com.dnk.auth.infrastructure.persistence.UserRightsFetcher;
 
 public class GoogleLoginUseCase {
 
     private final IdentityProviderPort identityProviderPort;
     private final MfaOtpRepositoryPort mfaOtpRepositoryPort;
     private final EmailOtpService emailOtpService;
+    private final UserRightsFetcher userRightsFetcher;
     private final SecureRandom secureRandom = new SecureRandom();
 
     public GoogleLoginUseCase(IdentityProviderPort identityProviderPort,
                               MfaOtpRepositoryPort mfaOtpRepositoryPort,
-                              EmailOtpService emailOtpService) {
+                              EmailOtpService emailOtpService,
+                              UserRightsFetcher userRightsFetcher) {
         this.identityProviderPort = identityProviderPort;
         this.mfaOtpRepositoryPort = mfaOtpRepositoryPort;
         this.emailOtpService = emailOtpService;
+        this.userRightsFetcher = userRightsFetcher;
     }
 
     public GoogleLoginResult execute(String idToken) {
@@ -31,6 +36,12 @@ public class GoogleLoginUseCase {
         String email = identity.email();
         if (email == null || email.isBlank()) {
             throw new AuthException("Email not available for identity provider user: " + userId);
+        }
+
+        // Auto-assign 'student' role if user has no roles
+        List<String> roles = userRightsFetcher.getUserRoles(userId);
+        if (roles.isEmpty()) {
+            userRightsFetcher.assignRole(userId, "student");
         }
 
         // Invalidate previous OTPs for this user

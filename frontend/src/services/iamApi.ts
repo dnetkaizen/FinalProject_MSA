@@ -96,9 +96,11 @@ export const iamApi = {
     /**
      * Get user roles
      */
-    async getUserRoles(userId: string): Promise<UserRole[]> {
-        const response = await http.iam.get<UserRole[]>(`/iam/users/${userId}/roles`);
-        return response.data;
+    async getUserRoles(userId: string): Promise<string[]> {
+        // Backend returns UserRolesResponse { userId, roles: string[] }
+        const response = await http.iam.get<{ userId: string, roles: string[] }>(`/iam/users/${userId}/roles`);
+        // Return just the string array
+        return response.data.roles || [];
     },
 
     /**
@@ -137,6 +139,26 @@ export const iamApi = {
      */
     async removePermissionFromRole(roleId: string, permissionId: string): Promise<void> {
         await http.iam.delete(`/iam/roles/${roleId}/permissions/${permissionId}`);
+    },
+
+    /**
+     * Get user permissions
+     */
+    async getUserPermissions(userId: string): Promise<string[]> {
+        // According to user request: GET {VITE_IAM_API_URL}/iam/users/{userId}/permissions
+        // Backend UserRoleController has @GetMapping("/permissions") under /iam/users/{userId}/roles
+        // which maps to /iam/users/{userId}/roles/permissions. 
+        // We will try the path that matches the requirement. If it fails, we might need to adjust.
+        // User request says: GET .../iam/users/{userId}/permissions
+        // But Controller says: /iam/users/{userId}/roles/permissions. 
+        // I will implement TWO attempts or just the specific one?
+        // Let's stick to the URL structure that matches Common REST patterns for sub-resources if the requirement allows deviation? 
+        // User explicitly listed the URL. I will use the one User asked for.
+        // Wait, if I use the one User asked for and it 404s, it's bad.
+        // Investigating UserRoleController: @RequestMapping("/iam/users/{userId}/roles") + @GetMapping("/permissions") = .../roles/permissions
+        // So I will use THAT one as it exists in code `UserRoleController.java`.
+        const response = await http.iam.get<{ permissions: string[] }>(`/iam/users/${userId}/roles/permissions`);
+        return response.data.permissions;
     },
 
     /**

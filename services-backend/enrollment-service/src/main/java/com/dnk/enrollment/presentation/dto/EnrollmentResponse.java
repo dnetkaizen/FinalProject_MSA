@@ -9,6 +9,7 @@ import java.util.UUID;
 public record EnrollmentResponse(
     UUID id,
     String userId,
+    String email,
     UUID courseId,
     Instant enrolledAt
 ) {
@@ -16,6 +17,7 @@ public record EnrollmentResponse(
         return new EnrollmentResponse(
             enrollment.id(),
             enrollment.userId(),
+            enrollment.email(),
             enrollment.courseId(),
             enrollment.enrolledAt()
         );

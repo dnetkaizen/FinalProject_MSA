@@ -16,6 +16,7 @@ export interface Course {
 export interface Enrollment {
     id: string;
     userId: string;
+    email?: string; // Added email field
     courseId: string;
     enrolledAt: string; // Backend might use createdAt
     status: 'active' | 'completed' | 'dropped'; // Backend might generic status
@@ -100,7 +101,7 @@ export const enrollmentApi = {
      * Get all enrollments (Admin?)
      */
     async getEnrollments(): Promise<Enrollment[]> {
-        const response = await http.enrollment.get<Enrollment[]>('/enrollments');
+        const response = await http.enrollment.get<Enrollment[]>('/enrollments/all');
         return response.data;
     },
 

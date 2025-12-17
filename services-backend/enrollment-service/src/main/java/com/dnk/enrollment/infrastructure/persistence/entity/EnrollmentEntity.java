@@ -23,6 +23,9 @@ public class EnrollmentEntity {
     
     @Column(name = "user_id", nullable = false)
     private String userId;
+
+    @Column(name = "email")
+    private String email;
     
     @Column(name = "course_id", nullable = false)
     private UUID courseId;

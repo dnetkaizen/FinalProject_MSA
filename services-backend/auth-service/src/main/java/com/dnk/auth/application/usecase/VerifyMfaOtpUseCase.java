@@ -10,18 +10,24 @@ import com.dnk.auth.application.port.out.PasswordHashingPort;
 import com.dnk.auth.application.port.out.TokenProviderPort;
 import com.dnk.auth.domain.model.MfaOtp;
 
+import com.dnk.auth.infrastructure.persistence.UserRightsFetcher;
+import java.util.List;
+
 public class VerifyMfaOtpUseCase {
 
     private final MfaOtpRepositoryPort mfaOtpRepositoryPort;
     private final TokenProviderPort tokenProviderPort;
     private final PasswordHashingPort passwordHashingPort;
+    private final UserRightsFetcher userRightsFetcher;
 
     public VerifyMfaOtpUseCase(MfaOtpRepositoryPort mfaOtpRepositoryPort,
                                TokenProviderPort tokenProviderPort,
-                               PasswordHashingPort passwordHashingPort) {
+                               PasswordHashingPort passwordHashingPort,
+                               UserRightsFetcher userRightsFetcher) {
         this.mfaOtpRepositoryPort = mfaOtpRepositoryPort;
         this.tokenProviderPort = tokenProviderPort;
         this.passwordHashingPort = passwordHashingPort;
+        this.userRightsFetcher = userRightsFetcher;
     }
 
     public AuthTokens execute(String userId, String otp) {
@@ -38,7 +44,11 @@ public class VerifyMfaOtpUseCase {
         mfaOtpRepositoryPort.markVerified(mfaOtp.getId(), now);
 
         String email = mfaOtp.getEmail();
-        String accessToken = tokenProviderPort.generateAccessToken(userId, email);
+        
+        List<String> roles = userRightsFetcher.getUserRoles(userId);
+        List<String> permissions = userRightsFetcher.getUserPermissions(userId);
+
+        String accessToken = tokenProviderPort.generateAccessToken(userId, email, roles, permissions);
         String refreshToken = tokenProviderPort.generateRefreshToken(userId, email);
 
         return new AuthTokens(accessToken, refreshToken);

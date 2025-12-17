@@ -21,17 +21,19 @@ public class EnrollmentRepositoryAdapter implements EnrollmentRepositoryPort {
         EnrollmentEntity entity = EnrollmentEntity.builder()
                 .id(enrollment.id())
                 .userId(enrollment.userId())
+                .email(enrollment.email())
                 .courseId(enrollment.courseId())
                 .enrolledAt(enrollment.enrolledAt())
                 .build();
         EnrollmentEntity saved = enrollmentJpaRepository.save(entity);
-        return new Enrollment(saved.getId(), saved.getUserId(), saved.getCourseId(), saved.getEnrolledAt());
+        return new Enrollment(saved.getId(), saved.getUserId(), saved.getEmail(), saved.getCourseId(), saved.getEnrolledAt());
     }
 
     @Override
     public List<Enrollment> findByUserId(String userId) {
         return enrollmentJpaRepository.findByUserId(userId).stream()
-                .map(entity -> new Enrollment(entity.getId(), entity.getUserId(), entity.getCourseId(), entity.getEnrolledAt()))
+                .map(entity -> new Enrollment(entity.getId(), entity.getUserId(), entity.getEmail(), entity.getCourseId(),
+                        entity.getEnrolledAt()))
                 .collect(Collectors.toList());
     }
 
@@ -39,5 +41,12 @@ public class EnrollmentRepositoryAdapter implements EnrollmentRepositoryPort {
     public boolean existsByUserAndCourse(String userId, UUID courseId) {
         return enrollmentJpaRepository.existsByUserAndCourse(userId, courseId);
     }
-}
 
+    @Override
+    public List<Enrollment> findAll() {
+        return enrollmentJpaRepository.findAll().stream()
+                .map(entity -> new Enrollment(entity.getId(), entity.getUserId(), entity.getEmail(), entity.getCourseId(),
+                        entity.getEnrolledAt()))
+                .collect(Collectors.toList());
+    }
+}

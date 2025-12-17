@@ -22,7 +22,7 @@ public class EnrollUserUseCase {
     private final CourseRepositoryPort courseRepository;
 
     @Transactional
-    public Enrollment execute(String userId, UUID courseId) {
+    public Enrollment execute(String userId, String email, UUID courseId) {
         if (userId == null || userId.trim().isEmpty()) {
             throw new IllegalArgumentException("User ID cannot be empty");
         }
@@ -41,11 +41,12 @@ public class EnrollUserUseCase {
             throw new IllegalArgumentException("User is already enrolled in this course");
         }
         
-        log.info("Enrolling user in course - userId: {}, courseId: {}, courseCode: {}", 
-                trimmedUserId, courseId, course.code());
+        log.info("Enrolling user in course - userId: {}, email: {}, courseId: {}, courseCode: {}", 
+                trimmedUserId, email, courseId, course.code());
         Enrollment enrollment = new Enrollment(
                 UUID.randomUUID(),
                 trimmedUserId,
+                email,
                 courseId,
                 Instant.now()
         );
