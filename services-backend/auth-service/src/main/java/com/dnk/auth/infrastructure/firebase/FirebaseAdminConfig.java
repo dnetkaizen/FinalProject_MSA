@@ -1,7 +1,9 @@
 package com.dnk.auth.infrastructure.firebase;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -21,39 +23,44 @@ public class FirebaseAdminConfig {
 
     private static final Logger log = LoggerFactory.getLogger(FirebaseAdminConfig.class);
     private static final String FIREBASE_SERVICE_ACCOUNT_ENV = "FIREBASE_SERVICE_ACCOUNT_PATH";
+    private static final String FIREBASE_SERVICE_ACCOUNT_JSON = "FIREBASE_SERVICE_ACCOUNT_JSON";
 
     @Bean
-    public FirebaseApp firebaseApp() {
+    public FirebaseApp firebaseApp() throws IOException {
+        // 1. Try JSON content from Env Var (Render/Prod)
+        String firebaseJson = System.getenv(FIREBASE_SERVICE_ACCOUNT_JSON);
+        
+        if (firebaseJson != null && !firebaseJson.isBlank()) {
+             try (InputStream serviceAccount = new ByteArrayInputStream(firebaseJson.getBytes(StandardCharsets.UTF_8))) {
+                return initializeFirebase(serviceAccount, "environment variable JSON");
+             }
+        }
+
+        // 2. Try File Path from Env Var (Local Dev)
         String serviceAccountPathValue = System.getenv(FIREBASE_SERVICE_ACCOUNT_ENV);
-        if (serviceAccountPathValue == null || serviceAccountPathValue.isBlank()) {
-            throw new IllegalStateException(
-                    FIREBASE_SERVICE_ACCOUNT_ENV + " environment variable is not set or is blank");
-        }
-
-        Path serviceAccountPath = Paths.get(serviceAccountPathValue);
-        if (!Files.exists(serviceAccountPath)) {
-            throw new IllegalStateException(
-                    "Firebase service account file not found at path: " + serviceAccountPath.toAbsolutePath());
-        }
-
-        try (InputStream serviceAccountStream = Files.newInputStream(serviceAccountPath)) {
-            FirebaseOptions options = FirebaseOptions.builder()
-                    .setCredentials(GoogleCredentials.fromStream(serviceAccountStream))
-                    .build();
-
-            FirebaseApp app;
-            if (FirebaseApp.getApps().isEmpty()) {
-                app = FirebaseApp.initializeApp(options);
-            } else {
-                app = FirebaseApp.getInstance();
+        if (serviceAccountPathValue != null && !serviceAccountPathValue.isBlank()) {
+            Path serviceAccountPath = Paths.get(serviceAccountPathValue);
+            if (Files.exists(serviceAccountPath)) {
+                 try (InputStream serviceAccount = Files.newInputStream(serviceAccountPath)) {
+                    return initializeFirebase(serviceAccount, "file: " + serviceAccountPath.toAbsolutePath());
+                 }
             }
-
-            log.info("FirebaseApp initialized successfully using service account file at: {}",
-                    serviceAccountPath.toAbsolutePath());
+        }
+        
+        throw new IllegalStateException("Firebase configuration not found. Set FIREBASE_SERVICE_ACCOUNT_JSON or FIREBASE_SERVICE_ACCOUNT_PATH.");
+    }
+    
+    private FirebaseApp initializeFirebase(InputStream credentialsStream, String source) throws IOException {
+         FirebaseOptions options = FirebaseOptions.builder()
+                .setCredentials(GoogleCredentials.fromStream(credentialsStream))
+                .build();
+        
+        if (FirebaseApp.getApps().isEmpty()) {
+            FirebaseApp app = FirebaseApp.initializeApp(options);
+            log.info("FirebaseApp initialized successfully from {}", source);
             return app;
-        } catch (IOException e) {
-            throw new IllegalStateException("Failed to initialize FirebaseApp from service account file at path: "
-                    + serviceAccountPath.toAbsolutePath(), e);
+        } else {
+            return FirebaseApp.getInstance();
         }
     }
 

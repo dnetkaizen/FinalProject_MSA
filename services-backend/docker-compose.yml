@@ -5,11 +5,10 @@ services:
       - "8081:8081"
     env_file:
       - ./auth-service/.env
-    volumes:
-      - ./auth-service/secrets:/app/secrets:ro
-    environment:
-      # Override path to point to the mounted volume in the container
-      - FIREBASE_SERVICE_ACCOUNT_PATH=/app/secrets/firebase-service-account.json
+    # volumes:
+    #   - ./auth-service/secrets:/app/secrets:ro
+    # environment:
+    #   - FIREBASE_SERVICE_ACCOUNT_PATH=/app/secrets/firebase-service-account.json
 
   iam-service:
     build: ./iam-service
