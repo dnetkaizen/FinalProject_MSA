@@ -76,3 +76,13 @@ El script para inicializar toda la base de datos (esquemas, tablas y datos semil
 `database/init-db.sql`
 
 Cópialo y ejecútalo en el editor SQL de Supabase antes de iniciar los servicios.
+
+## ⚡️ Optimización de Conexiones (Importante para Render/Supabase)
+
+Para evitar el error `MaxClientsInSessionMode` en Supabase Free Tier, los microservicios están configurados con **HikariCP** optimizado:
+
+- **Max Pool Size**: 2 conexiones por servicio (Total: 6).
+- **Idle Timeout**: 30s para liberar conexiones no usadas.
+- **JPA**: Validaciones de esquema desactivadas (`none`) y dialecto explícito para evitar consultas innecesarias en el arranque.
+
+Si necesitas escalar, asegúrate de que el total de conexiones no supere el límite de clientes de tu pooler en Supabase.

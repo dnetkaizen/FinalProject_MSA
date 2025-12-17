@@ -18,7 +18,7 @@ El sistema se divide en dos grandes componentes:
 
 ## 🛠 Configuración Inicial (Importante)
 
-A diferencia de versiones anteriores, **no existe un archivo .env en la raíz**. Cada servicio (frontend y microservicios) gestiona sus propias variables de entorno basándose en su respectivo `.env.example`.
+Cada servicio (frontend y microservicios) gestiona sus propias variables de entorno basándose en su respectivo `.env.example`.
 
 ### 1. Base de Datos (Supabase)
 El sistema utiliza **Supabase** (PostgreSQL) como proveedor de base de datos.
